@@ -10,14 +10,6 @@ The project currently focuses on Consumer Price Index (CPI) inflation across Ind
 
 > The deployment link will be added after the application is published on Streamlit Community Cloud.
 
-## Dashboard Preview
-
-Add a screenshot of the dashboard here:
-
-```markdown
-<img width="1813" height="1055" alt="image" src="https://github.com/user-attachments/assets/8bd02afe-3d1c-4330-9fd1-65d12c6f8980" />
-
-```
 
 ## Current Features
 
@@ -62,6 +54,8 @@ Future versions may include:
 - Equity-market indicators
 - Foreign investment flows
 - Commodity and energy prices
+- Forecasts for CPI inflation and other major economic indicators
+- Forecast ranges and uncertainty intervals
 
 ## Technology Stack
 
