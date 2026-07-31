@@ -1,0 +1,12 @@
+# static, old and testing files
+
+inr_usd_volt.png
+CPIndex_Jan13-To-Jan25.csv
+BankWise.csv
+BankWise.xls
+
+#folder
+forecasting_cpi_gdp/
+
+# hidden files
+.DS_Store
