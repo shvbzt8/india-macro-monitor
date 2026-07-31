@@ -6,9 +6,8 @@ The project currently focuses on Consumer Price Index (CPI) inflation across Ind
 
 ## Live Dashboard
 
-[Open the India Economic Monitor](<YOUR-STREAMLIT-APP-URL>)
+[Open the India Economic Monitor](https://shvbzt8-india-macro-monitor-ind-eco-g6tjwf.streamlit.app/)
 
-> The deployment link will be added after the application is published on Streamlit Community Cloud.
 
 
 ## Current Features
