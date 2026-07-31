@@ -15,7 +15,8 @@ The project currently focuses on Consumer Price Index (CPI) inflation across Ind
 Add a screenshot of the dashboard here:
 
 ```markdown
-![India Economic Monitor dashboard](assets/dashboard-preview.png)
+<img width="1813" height="1055" alt="image" src="https://github.com/user-attachments/assets/8bd02afe-3d1c-4330-9fd1-65d12c6f8980" />
+
 ```
 
 ## Current Features
