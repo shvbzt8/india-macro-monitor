@@ -12,61 +12,24 @@ The project currently focuses on Consumer Price Index (CPI) inflation across Ind
 
 ## Current Features
 
-- Interactive state-wise CPI inflation map
-- Month and year selection
-- Consumer item-group selection
-- State and union territory comparisons
-- Ranking of the five states with the highest inflation
-- Rural, urban, and combined-sector comparison
-- All-India CPI level and inflation time series
-- Interactive Plotly charts with hover information
-- Responsive Streamlit dashboard layout
+An interactive, filterable view of CPI inflation: a state-wise choropleth map, a bar chart ranking the five states with the highest inflation, and an All-India level-vs-inflation time series, each split by rural/urban/combined sector and by consumption item group. A sidebar toggle switches the whole dashboard between two CPI series:
+
+- **Current series** (base 2024 = 100): monthly from January 2025 onward, synced automatically.
+- **Historical series** (base 2012 = 100): January 2013 through December 2025, MoSPI's prior methodology, kept as a frozen archive since it's no longer being updated.
+
+Charts are built with Plotly and support hover tooltips; the layout is responsive within Streamlit's page width.
 
 ## Indicators Currently Covered
 
-### Consumer Price Index
-
-The current version presents:
-
-- State-wise year-on-year CPI inflation
-- Rural CPI inflation
-- Urban CPI inflation
-- Combined CPI inflation
-- CPI index levels
-- Inflation trends over time
-- Inflation across consumption divisions
+Consumer Price Index only, for now: index levels and year-on-year inflation, by state/UT, sector, and consumption division, across both series described above.
 
 ## Planned Expansion
 
-Future versions may include:
-
-- Gross Domestic Product growth
-- Industrial production
-- Employment and unemployment
-- Government revenue and expenditure
-- Fiscal deficit and public debt
-- Merchandise exports and imports
-- Current account indicators
-- Repo rate and monetary-policy indicators
-- Banking and credit growth
-- Exchange rates
-- Equity-market indicators
-- Foreign investment flows
-- Commodity and energy prices
-- Forecasts for CPI inflation and other major economic indicators
-- Forecast ranges and uncertainty intervals
+The roadmap extends beyond CPI toward a fuller economic-monitoring platform: real-sector indicators (GDP growth, industrial production, employment), fiscal indicators (government revenue/expenditure, deficit, public debt), external-sector indicators (trade, current account, exchange rates, foreign investment), monetary and financial indicators (repo rate, credit growth, equity markets, commodity prices), and CPI forecasts with uncertainty ranges.
 
 ## Technology Stack
 
-- Python
-- Streamlit
-- Pandas
-- Plotly
-- Matplotlib
-- Requests
-- PyArrow
-- GeoJSON
-- Git, GitHub, and GitHub Actions
+Python (Streamlit, Pandas, Plotly, Matplotlib, Requests, PyArrow) for the app and data pipeline, GeoJSON for map boundaries, and Git/GitHub with GitHub Actions for version control and scheduled syncs.
 
 ## Project Structure
 
@@ -86,8 +49,6 @@ india-economic-monitor/
 └── .gitignore
 ```
 
-Development notebooks may also be present in the repository. They are used for data exploration and testing rather than running the deployed application.
-
 ## Data Sources
 
 The dashboard uses data obtained from official Indian statistical sources.
@@ -99,15 +60,15 @@ Users should consult the original source publications for official definitions, 
 
 ## Data Pipeline
 
-`fetch_cpi.py` syncs `cpi_data.parquet` from the MoSPI eSankhyiki API and is scheduled to run monthly via a GitHub Actions workflow (`.github/workflows/sync_cpi_data.yml`), which commits the refreshed dataset back to the repository. Streamlit Cloud then redeploys automatically on the new commit, so the live dashboard stays current without manual intervention.
+`fetch_cpi.py` syncs `cpi_data.parquet` from the MoSPI eSankhyiki API. The current series is refreshed monthly by a GitHub Actions workflow (`.github/workflows/sync_cpi_data.yml`), which commits the updated dataset back to the repository; Streamlit Cloud then redeploys automatically, so the live dashboard stays current without manual intervention. The historical series was a one-time backfill and isn't part of that recurring sync, since MoSPI no longer publishes new data for it.
 
-The API has no server-side way to request division-level rows only — filtering by division also returns every group/class/sub_class/item row beneath it. `fetch_cpi.py` pages through the requested months and keeps the division-level rows client-side, which is why syncs are done per month rather than as a single bulk pull.
+The API has no server-side way to request only the top-level (division/group) rows — filtering by division or group also returns every finer category beneath it. `fetch_cpi.py` pages through the requested months and keeps the top-level rows client-side, which is why syncs are done per month rather than as a single bulk pull.
 
 ## Limitations
 
 - The current release focuses primarily on CPI inflation.
-- Some indicators may be published with a delay.
-- Official statistics may be revised after their initial release.
+- The historical series (base 2012) predates a couple of union-territory mergers/splits and isn't published state-wise for every division, so a few state/division combinations show no data on the map — this reflects the original MoSPI data, not a pipeline gap.
+- Some indicators may be published with a delay, and official statistics may be revised after their initial release.
 - Geographic boundary data are used only for visualization.
 
 ## Disclaimer
