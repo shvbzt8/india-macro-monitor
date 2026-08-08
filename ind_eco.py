@@ -129,8 +129,8 @@ fig.update_layout(
     font=dict(color="black"),
     paper_bgcolor="white",
     map_style="white-bg",
-    width=600,
-    height=500, 
+    width=720,
+    height=540,
     map_zoom=2.95,
     map_center={"lat": 22, "lon": 82},   # India centroid lat-long
     margin={"r":0,"t":30,"l":0,"b":25}
@@ -166,7 +166,7 @@ fig_bar = px.bar(df_bar, x = "state", y = "inflation",color="sector", barmode="g
     })
 
 
-fig_bar.update_layout(width=630, height=430)
+fig_bar.update_layout(width=720, height=540)
 fig_bar.update_layout(bargap=0.55, bargroupgap=0.0)
 fig_bar.update_layout(
     plot_bgcolor="white",
@@ -198,14 +198,27 @@ fig_dual.add_trace(
     secondary_y=True,
 )
 
-fig_dual.update_xaxes(title_text="Month-Year", dtick="M1", tickformat="%b-%Y")
+# With decades of monthly history (the old series especially), a tick for
+# every month is unreadable -- space ticks out as the series gets longer.
+n_months = df_ts_clean["date"].nunique()
+if n_months > 96:
+    ts_dtick = "M24"
+elif n_months > 48:
+    ts_dtick = "M12"
+elif n_months > 24:
+    ts_dtick = "M6"
+else:
+    ts_dtick = "M1"
+
+fig_dual.update_xaxes(title_text="Month-Year", dtick=ts_dtick, tickformat="%b-%Y", tickangle=-45)
 fig_dual.update_yaxes(title_text="CPI Inflation-%YoY", secondary_y=False)
 fig_dual.update_yaxes(title_text="CPI Level", secondary_y=True)
 
-fig_dual.update_layout(plot_bgcolor="#FFFFFF", 
+fig_dual.update_layout(plot_bgcolor="#FFFFFF",
                        paper_bgcolor="#FFFFFF",
-                       width=750,
-                       height = 400)
+                       width=1400,
+                       height = 480,
+                       margin=dict(b=90))
 fig_dual.update_xaxes(ticks = "outside", showline=True, linecolor = "Black")
 fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", secondary_y=False)
 fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", secondary_y=True)
