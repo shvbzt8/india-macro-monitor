@@ -63,18 +63,23 @@ Future versions may include:
 - Pandas
 - Plotly
 - Matplotlib
-- OpenPyXL
+- Requests
+- PyArrow
 - GeoJSON
-- Git and GitHub
+- Git, GitHub, and GitHub Actions
 
 ## Project Structure
 
 ```text
 india-economic-monitor/
+├── .github/
+│   └── workflows/
+│       └── sync_cpi_data.yml
 ├── .streamlit/
 │   └── config.toml
 ├── India_LGD_states.geojson
-├── cpi_6.xlsx
+├── cpi_data.parquet
+├── fetch_cpi.py
 ├── ind_eco.py
 ├── requirements.txt
 ├── README.md
@@ -87,15 +92,20 @@ Development notebooks may also be present in the repository. They are used for d
 
 The dashboard uses data obtained from official Indian statistical sources.
 
-- Consumer Price Index data: Ministry of Statistics and Programme Implementation, Government of India
+- Consumer Price Index data: Ministry of Statistics and Programme Implementation, Government of India, via the [eSankhyiki](https://esankhyiki.mospi.gov.in/) API
 - State and union territory boundaries: India Local Government Directory GeoJSON dataset
 
 Users should consult the original source publications for official definitions, methodology, revisions, and the latest observations.
 
+## Data Pipeline
+
+`fetch_cpi.py` syncs `cpi_data.parquet` from the MoSPI eSankhyiki API and is scheduled to run monthly via a GitHub Actions workflow (`.github/workflows/sync_cpi_data.yml`), which commits the refreshed dataset back to the repository. Streamlit Cloud then redeploys automatically on the new commit, so the live dashboard stays current without manual intervention.
+
+The API has no server-side way to request division-level rows only — filtering by division also returns every group/class/sub_class/item row beneath it. `fetch_cpi.py` pages through the requested months and keeps the division-level rows client-side, which is why syncs are done per month rather than as a single bulk pull.
+
 ## Limitations
 
 - The current release focuses primarily on CPI inflation.
-- The data-update process is not yet automated.
 - Some indicators may be published with a delay.
 - Official statistics may be revised after their initial release.
 - Geographic boundary data are used only for visualization.
