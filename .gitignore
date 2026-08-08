@@ -10,3 +10,6 @@ forecasting_cpi_gdp/
 
 # hidden files
 .DS_Store
+
+# python
+__pycache__/

@@ -38,13 +38,29 @@ def load_df(df_path):
     return pd.read_parquet(df_path)
 
 data = load_geojson("India_LGD_states.geojson")
-df =  load_df("cpi_data.parquet")
+df_all =  load_df("cpi_data.parquet")
 
-state_mapping = {
-    "Andaman And Nicobar Islands": "A & N Islands",
-    "Jammu And Kashmir": "Jammu & Kashmir",
-    "NCT of Delhi": "Delhi",
-    "The Dadra And Nagar Haveli And Daman And Diu": "DNHDD",
+# State names differ slightly between series (naming conventions and, for
+# base 2012, pre-2020 UT boundaries), so each series gets its own mapping
+# onto the geojson's "properties.state_name" values.
+STATE_MAPPING_BY_BASE_YEAR = {
+    2024: {
+        "Andaman And Nicobar Islands": "A & N Islands",
+        "Jammu And Kashmir": "Jammu & Kashmir",
+        "NCT of Delhi": "Delhi",
+        "The Dadra And Nagar Haveli And Daman And Diu": "DNHDD",
+    },
+    2012: {
+        "Andaman & Nicobar Islands": "A & N Islands",
+        # Dadra & Nagar Haveli and Daman & Diu were separate UTs pre-2020 and
+        # have no matching feature in the current geojson (merged into
+        # DNHDD), so they're left unmapped and simply won't render on the map.
+    },
+}
+
+SERIES_OPTIONS = {
+    "Current series (2025-present, base 2024 = 100)": 2024,
+    "Historical series (2013-2025, base 2012 = 100)": 2012,
 }
 
 
@@ -55,13 +71,22 @@ with open("India_LGD_states.geojson") as f:
 
 #------------------------------------Plot CPI inflation rate state wise------------------------------------
 
-df["state"] = df["state"].replace(state_mapping)
+series_label = st.sidebar.selectbox("Select CPI series", list(SERIES_OPTIONS.keys()))
+base_year = SERIES_OPTIONS[series_label]
+
+df = df_all[df_all["base_year"] == base_year].copy()
+df["state"] = df["state"].replace(STATE_MAPPING_BY_BASE_YEAR[base_year])
 df["Month-Year"] = df["month"].astype("str") + "-" + df["year"].astype("str")
 df["date"] = pd.to_datetime(df["Month-Year"], format= '%B-%Y')
 df.sort_values(by=["state","division", "date"], inplace=True)
 
 
-options = df.loc[df["date"] >= "2026-01-01 00:00:00", "Month-Year"].unique()
+options = (
+    df[["date", "Month-Year"]]
+    .drop_duplicates()
+    .sort_values("date", ascending=False)["Month-Year"]
+    .tolist()
+)
 labels = "Select month-year"
 selected = st.sidebar.selectbox(labels, options)
 item = st.sidebar.selectbox("Select item group", df["division"].unique().tolist())
@@ -112,7 +137,7 @@ fig.update_layout(
 )
 
 fig.add_annotation(
-    text="Source: MoSPI, CPI series (base 2024 = 100)",
+    text=f"Source: MoSPI, CPI series (base {base_year} = 100)",
     xref="paper", yref="paper",
     x=0.015, y=0.000, xanchor="left", yanchor="top",
     showarrow=False, font=dict(size=10, color="grey"),
