@@ -1,0 +1,39 @@
+name: Sync CPI data
+
+on:
+  schedule:
+    # 06:00 UTC on the 15th of every month -- MoSPI typically releases the
+    # new CPI print in the first half of the following month.
+    - cron: "0 6 15 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pandas pyarrow requests
+
+      - name: Fetch latest CPI months
+        run: python fetch_cpi.py --recent-months 3
+
+      - name: Commit updated dataset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- cpi_data.parquet; then
+            git add cpi_data.parquet
+            git commit -m "Sync CPI data ($(date -u +%Y-%m-%d))"
+            git push
+          else
+            echo "No changes to CPI data."
+          fi

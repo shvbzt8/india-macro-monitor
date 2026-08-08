@@ -35,10 +35,10 @@ def load_geojson(path):
 @st.cache_data
 def load_df(df_path):
     print("loading data...")
-    return pd.read_excel(df_path)
+    return pd.read_parquet(df_path)
 
 data = load_geojson("India_LGD_states.geojson")
-df =  load_df("cpi_6.xlsx")
+df =  load_df("cpi_data.parquet")
 
 state_mapping = {
     "Andaman And Nicobar Islands": "A & N Islands",
