@@ -129,22 +129,24 @@ fig.update_traces(
 fig.update_coloraxes(
     colorbar=dict(
         ticks = "outside",
-        title=dict(text="Inflation<br>(% YoY)", side="top"),
-        ticksuffix="%",       
+        title=dict(text="Inflation<br>(% YoY)", side="top", font=dict(size=15)),
+        tickfont=dict(size=13),
+        ticksuffix="%",
         thickness=14,
-        len=0.5,              
+        len=0.5,
         x=0.95,               # nudge it inward
     )
 )
 
 fig.update_layout(
         title=dict(                                    # dict goes HERE, in layout
-        subtitle=dict(text="Year-on-year change across Indian states and UTs"),
+        subtitle=dict(text="Year-on-year change across Indian states and UTs", font=dict(size=13)),
+        font=dict(size=18),
         x=.0075,
         y=0.990,
         xanchor="left",
     ),
-    font=dict(color="black"),
+    font=dict(color="black", size=15),
     paper_bgcolor="white",
     map_style="white-bg",
     width=720,
@@ -158,7 +160,7 @@ fig.add_annotation(
     text=f"Source: MoSPI, CPI series (base {base_year} = 100)",
     xref="paper", yref="paper",
     x=0.015, y=0.000, xanchor="left", yanchor="top",
-    showarrow=False, font=dict(size=10, color="grey"),
+    showarrow=False, font=dict(size=11, color="grey"),
 )
 
 
@@ -189,8 +191,10 @@ fig_bar.update_layout(bargap=0.55, bargroupgap=0.0)
 fig_bar.update_layout(
     plot_bgcolor="white",
     paper_bgcolor="white",
-    xaxis=dict(showgrid=False),
-    yaxis=dict(showgrid=False, ticks="outside", showline = True)
+    font=dict(size=15),
+    legend=dict(font=dict(size=14)),
+    xaxis=dict(showgrid=False, title_font=dict(size=16), tickfont=dict(size=14)),
+    yaxis=dict(showgrid=False, ticks="outside", showline = True, title_font=dict(size=16), tickfont=dict(size=14)),
 )
 
 
@@ -207,12 +211,12 @@ df_ts_clean = df_ts.dropna(subset=["inflation"])
 fig_dual = make_subplots(specs=[[{"secondary_y": True}]])
 
 fig_dual.add_trace(
-    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["inflation"], name="Inflation (% YoY)", line=dict(color="tab:red" if False else "red")),
+    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["inflation"], name="Inflation (% YoY)", line=dict(color="red", width=2.5)),
     secondary_y=False,
 )
 
 fig_dual.add_trace(
-    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["index"], name="CPI Level", line=dict(color="blue")),
+    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["index"], name="CPI Level", line=dict(color="blue", width=2.5)),
     secondary_y=True,
 )
 
@@ -228,7 +232,7 @@ elif n_months > 24:
 else:
     ts_dtick = "M1"
 
-fig_dual.update_xaxes(title_text="Month-Year", dtick=ts_dtick, tickformat="%b-%Y", tickangle=-45)
+fig_dual.update_xaxes(title_text="Month-Year", dtick=ts_dtick, tickformat="%b-%Y", tickangle=0)
 fig_dual.update_yaxes(title_text="CPI Inflation-%YoY", secondary_y=False)
 fig_dual.update_yaxes(title_text="CPI Level", secondary_y=True)
 
@@ -236,10 +240,12 @@ fig_dual.update_layout(plot_bgcolor="#FFFFFF",
                        paper_bgcolor="#FFFFFF",
                        width=1400,
                        height = 480,
-                       margin=dict(b=90))
-fig_dual.update_xaxes(ticks = "outside", showline=True, linecolor = "Black")
-fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", secondary_y=False)
-fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", secondary_y=True)
+                       font=dict(size=15),
+                       legend=dict(font=dict(size=14)),
+                       margin=dict(b=70))
+fig_dual.update_xaxes(ticks = "outside", showline=True, linecolor = "Black", title_font=dict(size=16), tickfont=dict(size=14))
+fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", title_font=dict(size=16), tickfont=dict(size=14), secondary_y=False)
+fig_dual.update_yaxes(ticks="outside", showline=True, linecolor="black", title_font=dict(size=16), tickfont=dict(size=14), secondary_y=True)
 
 
 
