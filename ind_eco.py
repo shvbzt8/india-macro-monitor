@@ -9,7 +9,13 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="India CPI Inflation Tracker")
+st.title("India CPI Inflation Tracker")
+st.markdown(
+    "Explore Consumer Price Index (CPI) inflation across Indian states and union territories, "
+    "sourced from MoSPI's eSankhyiki portal. Pick a series, month, and item group in the sidebar "
+    "-- the map, state ranking, and time series below all update together."
+)
 st.markdown(
     """
     <style>
@@ -72,6 +78,12 @@ with open("India_LGD_states.geojson") as f:
 #------------------------------------Plot CPI inflation rate state wise------------------------------------
 
 series_label = st.sidebar.selectbox("Select CPI series", list(SERIES_OPTIONS.keys()))
+st.sidebar.caption(
+    "**Current series**: MoSPI's ongoing series, updated monthly (Jan 2025 onward, base 2024 = 100). "
+    "**Historical series**: MoSPI's earlier methodology (Jan 2013-Dec 2025, base 2012 = 100); frozen, "
+    "since MoSPI stopped publishing it once the current series took over. Index levels aren't "
+    "comparable across the two -- each uses its own base period."
+)
 base_year = SERIES_OPTIONS[series_label]
 
 df = df_all[df_all["base_year"] == base_year].copy()
@@ -89,7 +101,13 @@ options = (
 )
 labels = "Select month-year"
 selected = st.sidebar.selectbox(labels, options)
+st.sidebar.caption("The month the map and state-ranking chart show a snapshot of (the time series always shows full history).")
+
 item = st.sidebar.selectbox("Select item group", df["division"].unique().tolist())
+st.sidebar.caption(
+    "The consumption category to filter all three charts by -- e.g. 'Food and beverages' or 'Housing'. "
+    "'CPI (General)' (current series) / 'General' (historical series) is the headline all-items index."
+)
 
 df_map = df[(df["date"] == dt.datetime.strptime(selected, "%B-%Y")) & (df["division"] == item) & (df["sector"] == "Combined")]
 st.write(selected)
