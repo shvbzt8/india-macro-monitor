@@ -65,13 +65,18 @@ STATE_MAPPING_BY_BASE_YEAR = {
 }
 
 SERIES_OPTIONS = {
-    "Current series (2025-present, base 2024 = 100)": 2024,
-    "Historical series (2013-2025, base 2012 = 100)": 2012,
+    "2025-present, base 2024 = 100 (Current series)": 2024,
+    "2013-2025, base 2012 = 100 (Historical series)": 2012,
 }
 
 
 with open("India_LGD_states.geojson") as f:
     india_geojson = json.load(f)
+
+# Every state/UT the geojson can render -- used so states with no CPI value
+# for a given month (a real MoSPI data gap, not a pipeline bug) still show
+# up on the map greyed out instead of silently vanishing.
+ALL_MAP_STATES = sorted({feat["properties"]["state_name"] for feat in india_geojson["features"]})
 
 
 
@@ -110,20 +115,48 @@ st.sidebar.caption(
 )
 
 df_map = df[(df["date"] == dt.datetime.strptime(selected, "%B-%Y")) & (df["division"] == item) & (df["sector"] == "Combined")]
-
+st.write(selected)
 
 
 config = {"scrollZoom": False}
 
-fig = px.choropleth_map(df_map, geojson= india_geojson, 
-                        locations= "state", 
-                        featureidkey= "properties.state_name",
-                        color= "inflation",
-                        color_continuous_scale='Viridis',
-                        title=f'State-wise CPI-General {selected}'
-                           )
-fig.update_traces(
-    hovertemplate="<b>%{location}</b><br>%{z:.2f}%<extra></extra>"
+# States with no value this month (either MoSPI never published one -- e.g.
+# Arunachal Pradesh's Combined-sector CPI in the historical series -- or the
+# state has no matching geojson feature at all, like Ladakh in the old
+# series) get their own grey layer instead of just disappearing from the map.
+df_map_have = df_map.dropna(subset=["inflation"])
+no_data_states = sorted(set(ALL_MAP_STATES) - set(df_map_have["state"]))
+
+fig = go.Figure()
+
+fig.add_trace(go.Choroplethmap(
+    geojson=india_geojson,
+    locations=df_map_have["state"],
+    featureidkey="properties.state_name",
+    z=df_map_have["inflation"],
+    coloraxis="coloraxis",
+    marker_line_width=0.5,
+    hovertemplate="<b>%{location}</b><br>%{z:.2f}%<extra></extra>",
+    showlegend=False,
+))
+
+if no_data_states:
+    fig.add_trace(go.Choroplethmap(
+        geojson=india_geojson,
+        locations=no_data_states,
+        featureidkey="properties.state_name",
+        z=[0] * len(no_data_states),
+        showscale=False,
+        colorscale=[[0, "#d3d3d3"], [1, "#d3d3d3"]],
+        marker_line_width=0.5,
+        hovertemplate="<b>%{location}</b><br>No data<extra></extra>",
+        name="No data",
+        showlegend=True,
+    ))
+
+fig.update_layout(
+    coloraxis=dict(colorscale="Viridis"),
+    legend=dict(x=0.02, y=0.055, xanchor="left", yanchor="bottom", bgcolor="rgba(255,255,255,0.7)", font=dict(size=12)),
 )
 
 fig.update_coloraxes(
@@ -140,6 +173,7 @@ fig.update_coloraxes(
 
 fig.update_layout(
         title=dict(                                    # dict goes HERE, in layout
+        text=f"State-wise CPI-General {selected}",
         subtitle=dict(text="Year-on-year change across Indian states and UTs", font=dict(size=13)),
         font=dict(size=18),
         x=.0075,

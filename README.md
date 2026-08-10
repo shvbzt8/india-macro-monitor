@@ -67,7 +67,7 @@ The API has no server-side way to request only the top-level (division/group) ro
 ## Limitations
 
 - The current release focuses primarily on CPI inflation.
-- The historical series (base 2012) predates a couple of union-territory mergers/splits and isn't published state-wise for every division, so a few state/division combinations show no data on the map — this reflects the original MoSPI data, not a pipeline gap.
+- The historical series (base 2012) predates a couple of union-territory mergers/splits, so Ladakh (split from Jammu & Kashmir in 2019) and the former Dadra & Nagar Haveli / Daman & Diu (merged in 2020) have no matching feature in the current map and are shown greyed out as "No data". Arunachal Pradesh is greyed out for nearly the entire historical series for a different reason: MoSPI never published a reliable Urban-sector CPI for it, so the Rural+Urban "Combined" index the map uses couldn't be computed. These reflect gaps in the original MoSPI data, not a pipeline bug.
 - Some indicators may be published with a delay, and official statistics may be revised after their initial release.
 - Geographic boundary data are used only for visualization.
 
