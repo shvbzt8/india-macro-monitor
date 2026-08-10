@@ -240,28 +240,23 @@ fig_bar.update_layout(
 
 filter = (df["division"] == item) & (df["state"] == "All India") & (df["sector"] == "Combined")
 df_ts = df[filter].copy()
-# Inflation (YoY) needs a same-month value from 12 months earlier, so it's
-# unavailable for the series' first year even though the Level itself is
-# published from month one -- each line drops nulls independently so Level
-# isn't truncated to match Inflation's later start.
-df_ts_inflation = df_ts.dropna(subset=["inflation"])
-df_ts_level = df_ts.dropna(subset=["index"])
+df_ts_clean = df_ts.dropna(subset=["inflation"])
 
 fig_dual = make_subplots(specs=[[{"secondary_y": True}]])
 
 fig_dual.add_trace(
-    go.Scatter(x=df_ts_inflation["date"], y=df_ts_inflation["inflation"], name="Inflation (% YoY)", line=dict(color="red", width=3.5)),
+    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["inflation"], name="Inflation (% YoY)", line=dict(color="red", width=3.5)),
     secondary_y=False,
 )
 
 fig_dual.add_trace(
-    go.Scatter(x=df_ts_level["date"], y=df_ts_level["index"], name="CPI Level", line=dict(color="blue", width=3.5)),
+    go.Scatter(x=df_ts_clean["date"], y=df_ts_clean["index"], name="CPI Level", line=dict(color="blue", width=3.5)),
     secondary_y=True,
 )
 
 # With decades of monthly history (the old series especially), a tick for
 # every month is unreadable -- space ticks out as the series gets longer.
-n_months = df_ts["date"].nunique()
+n_months = df_ts_clean["date"].nunique()
 if n_months > 96:
     ts_dtick = "M24"
 elif n_months > 48:
