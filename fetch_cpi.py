@@ -18,6 +18,11 @@ client-side. Both series normalize into the same schema, with the old
 series' "group" (its top level) stored in the "division" column so
 ind_eco.py's existing division-based filtering works for both unmodified.
 
+Requests go through the `mospi-esankhyiki` package rather than raw `requests`
+calls -- it wraps the same MoSPI endpoints with the legacy-TLS-renegotiation
+workaround their server requires (OpenSSL 3.x disables that by default) plus
+retries, so this script doesn't have to carry that itself.
+
 Usage:
     python fetch_cpi.py --seed-from-excel cpi_6.xlsx        # one-off: adopt existing export as history (base 2024)
     python fetch_cpi.py --recent-months 2                    # incremental sync (used by CI, base 2024)
@@ -26,18 +31,15 @@ Usage:
 """
 
 import argparse
+import contextlib
 import datetime as dt
-import ssl
+import io
 import time
 from pathlib import Path
 
+import esankhyiki
 import pandas as pd
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3 import PoolManager
 
-API_ROOT = "https://api.mospi.gov.in/api/cpi"
-HEADERS = {"User-Agent": "Mozilla/5.0"}
 PAGE_SIZE = 100
 REQUEST_DELAY = 0.2
 
@@ -55,18 +57,17 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December",
 ]
 
-# How to talk to each base year's endpoint, and how to recognize a top-level
-# (division/group) row versus one that belongs to a finer child category.
+# How to recognize a top-level (division/group) row versus one that belongs
+# to a finer child category -- both base years share one dataset ("CPI") in
+# esankhyiki, which routes to the right MoSPI endpoint by base_year.
 SERIES_CONFIG = {
     "2024": {
-        "endpoint": f"{API_ROOT}/getCPIData",
         # division-level rows simply have no group/class/sub_class/item set.
         "is_top_level": lambda row: row.get("group") is None,
         "division_field": "division",
         "code_field": "code",
     },
     "2012": {
-        "endpoint": f"{API_ROOT}/getCPIIndex",
         # every row has a non-null "subgroup" -- the group-level aggregate is
         # the row whose subgroup is literally "<Group>-Overall".
         "is_top_level": lambda row: row.get("subgroup") == f"{row.get('group')}-Overall",
@@ -76,35 +77,8 @@ SERIES_CONFIG = {
 }
 
 
-class _LegacyRenegotiationAdapter(HTTPAdapter):
-    """MoSPI's server requires legacy TLS renegotiation, which OpenSSL 3.x
-    disables by default. Cert/hostname verification stays on -- only the
-    renegotiation option is relaxed."""
-
-    def __init__(self, ssl_context, **kwargs):
-        self.ssl_context = ssl_context
-        super().__init__(**kwargs)
-
-    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
-        pool_kwargs["ssl_context"] = self.ssl_context
-        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, block=block, **pool_kwargs)
-
-
-def _make_session():
-    ctx = ssl.create_default_context()
-    ctx.options |= getattr(ssl, "OP_LEGACY_SERVER_CONNECT", 0x4)
-    session = requests.Session()
-    session.headers.update(HEADERS)
-    session.mount("https://", _LegacyRenegotiationAdapter(ctx))
-    return session
-
-
-SESSION = _make_session()
-
-
 def _fetch_page(base_year, page, year=None, month_code=None):
-    cfg = SERIES_CONFIG[base_year]
-    params = {
+    filters = {
         "base_year": base_year,
         "series": "Current",
         "Format": "JSON",
@@ -112,12 +86,18 @@ def _fetch_page(base_year, page, year=None, month_code=None):
         "page": page,
     }
     if year:
-        params["year"] = year
+        filters["year"] = year
     if month_code:
-        params["month_code"] = month_code
-    resp = SESSION.get(cfg["endpoint"], params=params, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
+        filters["month_code"] = month_code
+    # esankhyiki prints the raw request/response to stdout on every call;
+    # suppress that so it doesn't drown out this script's own progress lines.
+    # format="dict" returns just the row list (no pagination metadata), so
+    # fetch_top_level paginates by page-size rather than a total-pages count.
+    with contextlib.redirect_stdout(io.StringIO()):
+        try:
+            return esankhyiki.get_data("CPI", filters, format="dict")
+        except esankhyiki.exceptions.NoDataError:
+            return []
 
 
 def fetch_top_level(base_year, year=None, month_code=None):
@@ -126,18 +106,16 @@ def fetch_top_level(base_year, year=None, month_code=None):
     cfg = SERIES_CONFIG[base_year]
     records = []
     page = 1
-    total_pages = 1
-    while page <= total_pages:
-        payload = _fetch_page(base_year, page, year=year, month_code=month_code)
-        meta = payload.get("meta_data", {})
-        total_pages = meta.get("totalPages", 1)
-        for row in payload.get("data", []):
+    while True:
+        rows = _fetch_page(base_year, page, year=year, month_code=month_code)
+        for row in rows:
             if cfg["is_top_level"](row):
                 records.append(row)
-        print(f"  page {page}/{total_pages} -> {len(records)} top-level rows so far", end="\r")
+        print(f"  page {page} -> {len(records)} top-level rows so far", end="\r")
+        if len(rows) < PAGE_SIZE:
+            break
         page += 1
-        if page <= total_pages:
-            time.sleep(REQUEST_DELAY)
+        time.sleep(REQUEST_DELAY)
     print()
     return _to_frame(base_year, records)
 

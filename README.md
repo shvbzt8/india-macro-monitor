@@ -60,7 +60,7 @@ Users should consult the original source publications for official definitions, 
 
 ## Data Pipeline
 
-`fetch_cpi.py` syncs `cpi_data.parquet` from the MoSPI eSankhyiki API. The current series is refreshed monthly by a GitHub Actions workflow (`.github/workflows/sync_cpi_data.yml`), which commits the updated dataset back to the repository; Streamlit Cloud then redeploys automatically, so the live dashboard stays current without manual intervention. The historical series was a one-time backfill and isn't part of that recurring sync, since MoSPI no longer publishes new data for it.
+`fetch_cpi.py` syncs `cpi_data.parquet` from the MoSPI eSankhyiki API via the [`mospi-esankhyiki`](https://pypi.org/project/mospi-esankhyiki/) client library. The current series is refreshed monthly by a GitHub Actions workflow (`.github/workflows/sync_cpi_data.yml`), which commits the updated dataset back to the repository; Streamlit Cloud then redeploys automatically, so the live dashboard stays current without manual intervention. The historical series was a one-time backfill and isn't part of that recurring sync, since MoSPI no longer publishes new data for it.
 
 The API has no server-side way to request only the top-level (division/group) rows — filtering by division or group also returns every finer category beneath it. `fetch_cpi.py` pages through the requested months and keeps the top-level rows client-side, which is why syncs are done per month rather than as a single bulk pull.
 

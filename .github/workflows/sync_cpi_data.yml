@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pandas pyarrow requests
+        run: pip install pandas pyarrow mospi-esankhyiki
 
       - name: Fetch latest CPI months
         run: python fetch_cpi.py --recent-months 3
