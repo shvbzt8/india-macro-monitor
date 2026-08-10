@@ -123,7 +123,7 @@ st.sidebar.caption(
 )
 
 df_map = df[(df["date"] == dt.datetime.strptime(selected, "%B-%Y")) & (df["division"] == item) & (df["sector"] == "Combined")]
-st.write(selected)
+
 
 
 config = {"scrollZoom": False}
