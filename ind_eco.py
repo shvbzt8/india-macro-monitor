@@ -98,8 +98,16 @@ df["date"] = pd.to_datetime(df["Month-Year"], format= '%B-%Y')
 df.sort_values(by=["state","division", "date"], inplace=True)
 
 
+# Inflation (YoY) needs a same-month value from 12 months earlier, so it's
+# null for every state/division in a series' first year (and MoSPI has its
+# own occasional total gaps, e.g. April 2020) -- the map and bar chart both
+# color by inflation, so picking one of these months would show no data at
+# all. Drop them from the picker rather than let users land on a blank map.
+months_with_data = set(
+    df.loc[(df["sector"] == "Combined") & df["inflation"].notna(), "Month-Year"]
+)
 options = (
-    df[["date", "Month-Year"]]
+    df[df["Month-Year"].isin(months_with_data)][["date", "Month-Year"]]
     .drop_duplicates()
     .sort_values("date", ascending=False)["Month-Year"]
     .tolist()
